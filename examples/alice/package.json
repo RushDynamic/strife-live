@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/RushDynamic/strife-live/issues"
   },
-  "homepage": "https://github.com/RushDynamic/strife-live#readme"
+  "homepage": "https://github.com/RushDynamic/strife-live#readme",
+  "type": "module"
 }
