@@ -32,6 +32,7 @@ class StrifeLive {
         dataChannel.onclose = function (e) {
             console.log("Channel closed");
         }
+        return dataChannel;
     }
 
     async setOffer(offer) {
@@ -42,6 +43,7 @@ class StrifeLive {
         const answer = await this.peerConnection.createAnswer();
         await this.peerConnection.setLocalDescription(answer);
         console.log("Completed creating answer:", JSON.stringify(this.peerConnection.localDescription));
+        return answer;
     }
 }
 

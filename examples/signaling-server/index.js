@@ -1,10 +1,12 @@
 import express from "express";
+import cors from 'cors';
 
 const app = express();
 const portNumber = 5250;
 var offer = {};
 
 app.use(express.json());
+app.use(cors());
 app.post('/store', (req, res) => {
     try {
         offer = req.body.offer;
