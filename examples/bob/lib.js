@@ -1,16 +1,19 @@
 class StrifeLive {
     constructor() {
-        this._peerConnectionConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        this._peerConnectionConfig = { iceServers: [{ urls: "stun:stun1.l.google.com:19302" }] };
     }
-    createPeerConnection(config = this._peerConnectionConfig) {
+    createPeerConnection(onIceCandidateCallback, username, config = this._peerConnectionConfig) {
         const peerConnection = new RTCPeerConnection(config);
         this.peerConnection = peerConnection;
+        this.peerConnection.onicecandidate = function (e) {
+            if (e.candidate) {
+                console.log("Received ICE candidate for", username);
+                onIceCandidateCallback(username, e.candidate);
+            }
+        };
     }
 
-    async createOffer(offerCandidates, answerCandidates) {
-        this.peerConnection.onicecandidate = function (e) {
-            console.log("Received ICE candidate:", JSON.stringify(this.peerConnection?.localDescription))
-        };
+    async createOffer() {
         const offerDescription = await this.peerConnection.createOffer();
         await this.peerConnection.setLocalDescription(offerDescription);
         return {
@@ -35,6 +38,14 @@ class StrifeLive {
         this.peerConnection.dc = dataChannel;
     }
 
+    addIceCandidate(iceCandidate) {
+        this.peerConnection?.addIceCandidate(iceCandidate);
+    }
+
+    sendMessage(message) {
+        this.peerConnection.dc.send(message);
+    }
+
     receiveChannel() {
         this.peerConnection.ondatachannel = (e) => {
             this.peerConnection.dc = e.channel;
@@ -48,10 +59,12 @@ class StrifeLive {
         console.log("Done setting offer");
     }
     async createAnswer() {
-        const answer = await this.peerConnection.createAnswer();
-        await this.peerConnection.setLocalDescription(answer);
-        console.log("Completed creating answer:", JSON.stringify(this.peerConnection.localDescription));
-        return answer;
+        if (!this.peerConnection.localDescription) {
+            const answer = await this.peerConnection.createAnswer();
+            await this.peerConnection.setLocalDescription(answer);
+            console.log("Completed creating answer:", JSON.stringify(this.peerConnection.localDescription));
+            return answer;
+        }
     }
 
     async setAnswer(answer) {
