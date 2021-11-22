@@ -9,11 +9,42 @@
     <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"
         integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj"
         crossorigin="anonymous"></script>
-    <script src="./app.js" type="module" />
+    <script src="./lib.js" type="module"></script>
+    <script type="module" async>
+        import { StrifeLive } from './lib.js';
+        var socket;
+        var myAudioStream;
+        function connectToServer() {
+            socket = io.connect("http://localhost:5250");
+            socket.on("connect", () => {
+                console.log("Connected to signaling server, sending username");
+                socket.emit("username", "alice");
+            });
+        };
+
+        async function placeCall() {
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                myAudioStream = stream;
+                console.log("Fetched audio stream");
+                document.getElementById("my-audio").srcObject = myAudioStream;
+
+                StrifeLive.createPeerConnection();
+            }
+            catch (err) {
+                console.log("Error while fetching user stream:", err);
+            }
+        }
+        document.getElementById('btn-connect-ss').addEventListener('click', connectToServer);
+        document.getElementById('btn-call').addEventListener('click', placeCall);
+    </script>
 </head>
 
 <body>
-
+    <h1>Alice</h1>
+    <button id="btn-connect-ss">Connect to Server</button>
+    <button id="btn-call">Call</button>
+    <audio id="my-audio" autoplay controls />
 </body>
 
 </html>
