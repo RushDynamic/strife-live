@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"
+        integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj"
+        crossorigin="anonymous"></script>
+    <script src="./lib.js" type="module"></script>
+    <script type="module" async>
+        import { StrifeLive } from './lib.js';
+        var socket;
+        var myAudioStream;
+        async function connectToServer() {
+            socket = io.connect("http://localhost:5250");
+            socket.on("connect", () => {
+                console.log("Connected to signaling server, sending username");
+                socket.emit("username", "bob");
+            });
+
+            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            myAudioStream = stream;
+            console.log("Fetched audio stream");
+
+            // Create peer connection
+            let peerConnection = StrifeLive.createPeerConnection(myAudioStream);
+
+            // Fetch stream handler
+            peerConnection.onaddstream = (e) => {
+                console.log("Setting remote audio stream");
+                document.getElementById("remote-audio").srcObject = e?.stream;
+            }
+
+            // New ice candidate handler
+            peerConnection.onicecandidate = (e) => {
+                if (!e.candidate) return;
+                // Invoke newIceCandidate event in server with e.candidate
+                socket.emit('newIceCandidate', e.candidate);
+            }
+
+            // Add socket event handler for "getAnswer"
+            // Set received answer as peerConnection.setRemoteDescription
+            socket.on('getOffer', async (offer) => {
+                console.log("Received offer from server");
+                await StrifeLive.setOffer(offer);
+            });
+
+            // Add socket event handler for getIceCandidate
+            // Set peerConnection.addIceCandidate(newCandidate)
+            socket.on('getIceCandidate', async (iceCandidate) => {
+                await StrifeLive.addIceCandidate(iceCandidate);
+            });
+        };
+
+        async function answerCall() {
+            try {
+                let answer = await StrifeLive.createAnswer();
+                socket.emit('getAnswer', answer);
+            }
+            catch (err) {
+                console.log("Error while fetching user stream:", err);
+            }
+        }
+        document.getElementById('btn-connect-ss').addEventListener('click', connectToServer);
+        document.getElementById('btn-answer').addEventListener('click', answerCall);
+    </script>
+</head>
+
+<body>
+    <div class="username">
+        <h1>Bob</h1>
+    </div>
+    <div class="buttons">
+        <button id="btn-connect-ss">Connect to Server</button>
+        <button id="btn-answer">Answer</button>
+    </div>
+    <audio id="remote-audio" autoplay controls />
+</body>
+
+</html>

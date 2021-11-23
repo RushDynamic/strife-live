@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/RushDynamic/strife-live/issues"
   },
-  "homepage": "https://github.com/RushDynamic/strife-live#readme"
+  "homepage": "https://github.com/RushDynamic/strife-live#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "socket.io": "^4.3.2"
+  }
 }
