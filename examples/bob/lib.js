@@ -1,15 +1,26 @@
 class StrifeLive {
+    // TODO: Remove all logging statements
     constructor() {
         this._peerConnectionConfig = { iceServers: [{ urls: "stun:stun1.l.google.com:19302" }] };
     }
 
-    createPeerConnection(audioStream, config = this._peerConnectionConfig) {
+    /**
+     * Create a new RTCPeerConnection object and add the input stream to it
+     * @param {navigator.mediaDevices.getUserMedia()} stream 
+     * @param {} config 
+     * @returns {RTCPeerConnection} New instance of RTCPeerConnection
+     */
+    createPeerConnection(stream, config = this._peerConnectionConfig) {
         const peerConnection = new RTCPeerConnection(config);
         this.peerConnection = peerConnection;
-        this.peerConnection.addStream(audioStream);
+        this.peerConnection.addStream(stream);
         return this.peerConnection;
     }
 
+    /**
+     * Create a new offer and set it as the peerConnection's local description 
+     * @returns A new offer object
+     */
     async createOffer() {
         const offerDescription = await this.peerConnection.createOffer();
         await this.peerConnection.setLocalDescription(offerDescription);
@@ -19,42 +30,28 @@ class StrifeLive {
         };
     }
 
-    setupChannel(channelName) {
-        const dataChannel = this.peerConnection.createDataChannel(channelName);
-        dataChannel.onmessage = function (e) {
-            console.log(e.data);
-        }
-
-        dataChannel.onopen = function (e) {
-            console.log("Channel opened");
-        }
-
-        dataChannel.onclose = function (e) {
-            console.log("Channel closed");
-        }
-        this.peerConnection.dc = dataChannel;
-    }
-
+    /**
+     * Receive and update new ICE candidates from the remote peer (through signaling server)
+     * @param {RTCIceCandidate} iceCandidate 
+     */
     addIceCandidate(iceCandidate) {
         this.peerConnection?.addIceCandidate(iceCandidate);
     }
 
-    sendMessage(message) {
-        this.peerConnection.dc.send(message);
-    }
-
-    receiveChannel() {
-        this.peerConnection.ondatachannel = (e) => {
-            this.peerConnection.dc = e.channel;
-            this.peerConnection.dc.onmessage = e => console.log("New message:", e.data);
-            this.peerConnection.dc.onopen = e => console.log("Data channel opened");
-        }
-    }
-
+    /**
+     * Receive an offer from a remote peer and set it as the remote description
+     * @param {RTCSessionDescription} offer 
+     */
     async setOffer(offer) {
         await this.peerConnection.setRemoteDescription(offer);
         console.log("Done setting offer");
     }
+
+    /**
+     * 
+     * @returns {RTCSessionDescriptionInit} A new answer object for an already received offer.
+     *      The answer contains information about any media already attached to the session, codecs and options supported by the browser, and any ICE candidates already gathered
+     */
     async createAnswer() {
         if (!this.peerConnection.localDescription) {
             const answer = await this.peerConnection.createAnswer();
@@ -64,6 +61,10 @@ class StrifeLive {
         }
     }
 
+    /**
+     * Accepts an RTCSessionDescription object and sets it as the remote description for the PeerConnection
+     * @param {RTCSessionDescriptionInit} answer 
+     */
     async setAnswer(answer) {
         await this.peerConnection.setRemoteDescription(answer);
         console.log("Done setting answer");
