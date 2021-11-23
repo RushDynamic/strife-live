@@ -2,15 +2,12 @@ class StrifeLive {
     constructor() {
         this._peerConnectionConfig = { iceServers: [{ urls: "stun:stun1.l.google.com:19302" }] };
     }
-    createPeerConnection(onIceCandidateCallback, username, config = this._peerConnectionConfig) {
+
+    createPeerConnection(audioStream, config = this._peerConnectionConfig) {
         const peerConnection = new RTCPeerConnection(config);
         this.peerConnection = peerConnection;
-        this.peerConnection.onicecandidate = function (e) {
-            if (e.candidate) {
-                console.log("Received ICE candidate for", username);
-                onIceCandidateCallback(username, e.candidate);
-            }
-        };
+        this.peerConnection.addStream(audioStream);
+        return this.peerConnection;
     }
 
     async createOffer() {
