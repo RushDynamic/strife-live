@@ -13,13 +13,15 @@ class StrifeLive {
     createPeerConnection(stream, config = this._peerConnectionConfig) {
         const peerConnection = new RTCPeerConnection(config);
         this.peerConnection = peerConnection;
+        
+        // TODO: Switch to addTrack from addStream
         this.peerConnection.addStream(stream);
         return this.peerConnection;
     }
 
     /**
      * Create a new offer and set it as the peerConnection's local description 
-     * @returns A new offer object
+     * @returns {RTCSessionDescription} A new offer object
      */
     async createOffer() {
         const offerDescription = await this.peerConnection.createOffer();
